@@ -20,8 +20,8 @@ const routes = [
   },
   {
     path: "/map",
-    name: "Map",
-    component: () => import('../views/Map.vue')
+    name: "GoogleMap",
+    component: () => import('../views/GoogleMap.vue')
   }
 ];
 
