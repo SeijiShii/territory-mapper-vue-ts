@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <div id="googleMap" :style="`height:${height}px`"></div>
+    <div class="map-outer-frame">
+        <div id="googleMap" :style="`height:${height}`"></div>
         <template v-if="google && map">
             <slot :google="google" :map="map" />
         </template>
@@ -30,13 +30,11 @@
     export default class GoogleMap extends Vue {
         @Prop() private zoom!: number;
         @Prop() private center!: { lat: number; lng: number };
-        @Prop({ default: '240px' }) private height!: string;
+        @Prop({ default: '100%' }) private height!: string;
         google: any = null;
         map: any = null;
 
         mounted() {
-
-            console.log(process.env.VUE_APP_GOOGLE_MAP_API_KEY);
 
             this.loadGoogleMapsScript().then(google => {
                 this.google = google;
@@ -73,8 +71,28 @@
             this.map = new Map(mapContainer, {
                 zoom: this.zoom,
                 center: this.center,
-                mapTypeId: MapTypeId.ROADMAP
+                mapTypeId: MapTypeId.HYBRID,
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: false,
+            });
+            this.google.maps.event.addListener(this.map, 'click', (ev: any) => {
+                console.log(ev);
+                // alert('LatLng: ' + ev.latLng.toString());
+
+                const marker = new this.google.maps.Marker({
+                    position: ev.latLng,
+                    map: this.map,
+                    title: 'Hello marker!'
+                })
+
             })
         }
     }
 </script>
+
+<style lang="scss">
+    .map-outer-frame {
+        height: 100%;
+    }
+</style>

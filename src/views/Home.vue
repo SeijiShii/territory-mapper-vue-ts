@@ -1,9 +1,8 @@
 <template>
-  <div class="home" style="height: 500px">
+  <div class="home">
     <GoogleMap
             :zoom="17"
-            :center="{lat: 36.773981, lng: 140.725157}"
-            :height="600"/>
+            :center="{lat: 36.773981, lng: 140.725157}"/>
   </div>
 </template>
 
@@ -20,3 +19,9 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+    .home {
+        height: 100%;
+    }
+</style>
