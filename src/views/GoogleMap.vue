@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-    import { Component, Vue, Prop } from 'vue-property-decorator'
+    import {Component, Vue, Prop} from 'vue-property-decorator'
     import qs from 'query-string'
 
     const params = {
@@ -31,6 +31,7 @@
         @Prop() private zoom!: number;
         @Prop() private center!: { lat: number; lng: number };
         @Prop({ default: '100%' }) private height!: string;
+
         google: any = null;
         map: any = null;
 
@@ -76,17 +77,18 @@
                 mapTypeControl: false,
                 fullscreenControl: false,
             });
-            this.google.maps.event.addListener(this.map, 'click', (ev: any) => {
-                console.log(ev);
-                // alert('LatLng: ' + ev.latLng.toString());
 
-                const marker = new this.google.maps.Marker({
-                    position: ev.latLng,
-                    map: this.map,
-                    title: 'Hello marker!'
-                })
+            this.google.maps.event.addListener(this.map, 'click', this.onClickMap);
+            this.google.maps.event.addListener(this.map, 'mousemove', this.onHoverMap);
+        }
 
-            })
+        onClickMap(ev: any) {
+            console.log(ev);
+            this.$emit('on-click-map', this.map, ev);
+        }
+
+        onHoverMap(ev: any) {
+            this.$emit('on-mousemove-in-map', this.map, ev);
         }
     }
 </script>
