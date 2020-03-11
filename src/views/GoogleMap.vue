@@ -79,6 +79,7 @@
             });
 
             this.google.maps.event.addListener(this.map, 'click', this.onClickOnMap);
+            // this.google.maps.event.addListener(this.map, 'rightclick', this.onRightClick);
             this.google.maps.event.addListener(this.map, 'mousemove', this.onMoveInMap);
 
             this.$emit('on-google-map-mounted', this.google);
@@ -91,6 +92,10 @@
         onMoveInMap(ev: any) {
             this.$emit('on-mousemove-in-map', this.map, ev);
         }
+
+        // onRightClick(ev: any) {
+        //     this.$emit('on-right-click-map', this.map, ev);
+        // }
 
         latLngToPoint(latLng: any, map: any) {
             const topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());

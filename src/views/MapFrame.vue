@@ -3,6 +3,7 @@
         <GoogleMap class="google-map-frame"
             v-on:on-google-map-mounted="onGoogleMapMounted"
             v-on:on-click-map="onClickOnGoogleMap"
+            v-on:on-right-click-map="onRightClickMap"
             v-on:on-mousemove-in-map="onMoveInGoogleMap"
             :zoom="17"
             :center="{lat: 36.773981, lng: 140.725157}"/>
@@ -23,15 +24,15 @@
 
     import { Component, Vue, Prop } from 'vue-property-decorator'
     import GoogleMap from "@/views/GoogleMap.vue";
-    import vuetify from "@/plugins/vuetify";
+    import MapPoint from "@/models/MapPoint";
 
     @Component({components: {GoogleMap}})
     export default class MapFrame extends Vue{
 
-        google: any = null;
-        isDrawing = false;
-        outerFrame: any = null;
-        googleMapFrame: any = null;
+        private google: any = null;
+        private isDrawing = false;
+        private outerFrame: any = null;
+        private googleMapFrame: any = null;
 
         mounted() {
 
@@ -43,19 +44,24 @@
             this.refreshMapFrameSize()
         }
 
-        onGoogleMapMounted(google: any) {
+        private onGoogleMapMounted(google: any) {
             this.google = google;
         }
 
-
-
-
-
-        onClickOnGoogleMap(map: any, ev: any) {
+        private onClickOnGoogleMap(map: any, ev: any) {
             //
+
+            if (this.isDrawing) {
+                this.addMapPoint(map, ev.latLng);
+            }
         }
 
-        onMoveInGoogleMap(map: any, ev: any) {
+        private onRightClickMap(map: any, ev: any) {
+            this.isDrawing = false;
+            this.clearActiveUIs();
+        }
+
+        private onMoveInGoogleMap(map: any, ev: any) {
 
             if (this.isDrawing) {
                 this.drawCoordinateLines(map, ev.latLng)
@@ -63,7 +69,7 @@
 
         }
 
-        onClickDrawButton() {
+        private onClickDrawButton() {
             this.isDrawing = !this.isDrawing;
 
             if (!this.isDrawing) {
@@ -71,7 +77,7 @@
             }
         }
 
-        clearActiveUIs() {
+        private clearActiveUIs() {
             if (this.horizontalLine) {
                 this.horizontalLine.setMap(null);
                 this.horizontalLine = null;
@@ -88,7 +94,7 @@
             }
         }
 
-        get drawButtonIcon() {
+        private get drawButtonIcon() {
             if (this.isDrawing) {
                 return 'mdi-close-octagon-outline';
             } else {
@@ -96,27 +102,26 @@
             }
         }
 
-        refreshMapFrameSize() {
+        private refreshMapFrameSize() {
             const frameWidth = document.body.clientWidth - 50;
             this.googleMapFrame.style.width = frameWidth + 'px';
         }
 
-        activeColor = '#FFA500';
+        private activeColor = '#FFA500';
+        private inactiveColor = '#FFFF00';
 
-
-
-        coordinateLineOptions = {
+        private coordinateLineOptions = {
             strokeColor: this.activeColor,
             strokeOpacity: 1.0,
             strokeWeight: 1
         };
 
-        verticalLine: any = null;
-        horizontalLine: any = null;
-        activeMarker: any = null;
-        activeIcon: any = null;
+        private verticalLine: any = null;
+        private horizontalLine: any = null;
+        private activeMarker: any = null;
+        private activeIcon: any = null;
 
-        drawCoordinateLines(map: any, latLng: any) {
+        private drawCoordinateLines(map: any, latLng: any) {
 
             const x = latLng.lat(),
                 y = latLng.lng();
@@ -150,20 +155,47 @@
                     map: map,
                     icon: this.activeIcon,
                 });
+                this.activeMarker.addListener('click', () => {
+                    this.addMapPoint(map, this.activeMarker.getPosition());
+                });
+                this.activeMarker.addListener('rightclick', () => {
+                    this.isDrawing = false;
+                    this.clearActiveUIs();
+                });
             }
             this.activeMarker.setPosition(latLng);
         }
 
-        generateCircleIcon(color: string) {
+        private generateCircleIcon(color: string) {
             return {
-                path: 'M 86.93452,96.672615 A 13.607142,13.607142 0 0 1 73.327377,110.27976 13.607142,13.607142 0 0 1 59.720235,96.672615 13.607142,13.607142 0 0 1 73.327377,83.065473 13.607142,13.607142 0 0 1 86.93452,96.672615 Z',
-                // fillColor: color,
+                path: 'M -13,0 A 13,13 0 0 1 0,-13 13,13 0 0 1 13,0 13,13 0 0 1 0,13 13,13 0 0 1 -13,0 Z',
                 fillOpacity: 0,
-                anchor: new this.google.maps.Point(74,97),
+                anchor: new this.google.maps.Point(0, 0),
                 strokeColor: color,
                 strokeWeight: 3,
                 scale: 1
             };
+        }
+
+        private lastPoint: MapPoint | null = null;
+
+        private refreshDrawingLine(map: any) {
+            //
+        }
+
+        private addMapPoint(map: any, latLng: any) {
+
+            console.log(MapPoint);
+
+            const point = new MapPoint();
+            point.lat = latLng.lat();
+            point.lng = latLng.lng();
+
+            const marker = new this.google.maps.Marker({
+                map: map,
+                position: latLng,
+                icon: this.generateCircleIcon(this.inactiveColor),
+            });
         }
     }
 
