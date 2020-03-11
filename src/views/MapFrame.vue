@@ -1,27 +1,22 @@
 <template>
     <div class="map-outer-frame">
-        <GoogleMap class="map-inner-frame"
-                v-on:on-click-map="onClickInGoogleMap"
-                v-on:on-mousemove-in-map="onHoverGoogleMap"
-                :zoom="17"
-                :center="{lat: 36.773981, lng: 140.725157}"/>
+        <GoogleMap class="google-map-frame"
+            v-on:on-click-map="onClickOnGoogleMap"
+            v-on:on-mousemove-in-map="onMoveInGoogleMap"
+            :zoom="17"
+            :center="{lat: 36.773981, lng: 140.725157}"/>
 
-        <div class="map-overlay">
-
-            <div class="button-panel">
-                <v-btn text
-                       small
-                       height="40"
-                       @click="onClickDrawButton">
-                    <v-icon>{{ drawButtonIcon }}</v-icon>
-                </v-btn>
-            </div>
-
-            <!-- マウスカーソル -->
-            <div class="cursor">
-                <img :src="cursorPath">
-            </div>
+        <div class="side-panel">
+            <v-btn text
+                   small
+                   height="40"
+                   @click="onClickDrawButton">
+                <v-icon>{{ drawButtonIcon }}</v-icon>
+            </v-btn>
         </div>
+
+        <canvas class="map-overlay-canvas"></canvas>
+
     </div>
 </template>
 
@@ -35,42 +30,38 @@
     export default class MapFrame extends Vue{
 
         isDrawing = false;
-        cursor: any = null;
-        overlay: any = null;
+        outerFrame: any = null;
+        googleMapFrame: any = null;
+        mapOverlayCanvas: any = null;
 
         mounted() {
-            this.cursor = this.$el.querySelector('.cursor');
-            this.overlay = this.$el.querySelector('.map-overlay');
-            const cursorSize = 30;
 
-            this.overlay.addEventListener('mousemove', (ev: any) => {
-                this.cursor.style.visibility = 'visible';
-                this.cursor.style.left = (ev.pageX - cursorSize / 2) + 'px';
-                this.cursor.style.top = (ev.pageY - cursorSize / 2) + 'px';
-            });
+            this.outerFrame = this.$el.querySelector('.outer-frame');
+            this.googleMapFrame = this.$el.querySelector('.google-map-frame');
+            this.mapOverlayCanvas = this.$el.querySelector('.map-overlay-canvas');
 
-            this.overlay.addEventListener('mouseenter', () => {
-                // console.log('mouseenter');
-                this.cursor.style.visibility = 'visible';
-            });
+            window.addEventListener('resize', this.refreshMapFrameSize);
 
-            this.overlay.addEventListener('mouseleave', () => {
-                // console.log('mouseleave');
-                this.cursor.style.visibility = 'hidden';
-            });
+            this.refreshMapFrameSize()
         }
 
-        onClickInGoogleMap(map: any, ev: any) {
-            alert(map + ', ' + ev.latLng.toString());
+        onClickOnGoogleMap(map: any, ev: any, point: any) {
+            // alert(map + ', ' + ev.latLng.toString());
+
         }
 
-        onHoverGoogleMap(map: any, ev: any) {
-            console.log(ev.latLng.toString());
+        onMoveInGoogleMap(map: any, ev: any, point: any) {
+            // console.log(point);
+
+            this.drawCoordinateLines(point.x, point.y);
+
         }
 
         onClickDrawButton() {
             this.isDrawing = !this.isDrawing;
         }
+
+
 
         get drawButtonIcon() {
             if (this.isDrawing) {
@@ -80,11 +71,38 @@
             }
         }
 
-        get cursorPath() {
-            if (this.isDrawing) {
-                return require("../assets/orange_target.png");
-            } else {
-                return require("../assets/yellow_target.png");
+        refreshMapFrameSize() {
+            const frameWidth = document.body.clientWidth - 50;
+            this.googleMapFrame.style.width = frameWidth + 'px';
+
+            this.mapOverlayCanvas.style.width = frameWidth + 'px';
+            this.mapOverlayCanvas.style.height = document.body.clientHeight + 'px';
+
+            // ここで再びカンバスに自分の大きさを教えないと座標が壊れる。
+            this.mapOverlayCanvas.width = this.mapOverlayCanvas.offsetWidth;
+            this.mapOverlayCanvas.height = this.mapOverlayCanvas.offsetHeight;
+        }
+
+        drawCoordinateLines(x: number, y: number) {
+            const ctx = this.mapOverlayCanvas.getContext('2d');
+
+            if (ctx) {
+                ctx.clearRect(0, 0, this.mapOverlayCanvas.width, this.mapOverlayCanvas.height);
+
+                if (this.isDrawing) {
+
+                    ctx.strokeStyle = 'rgb(255, 165, 0)';
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(this.mapOverlayCanvas.width, y);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, this.mapOverlayCanvas.height);
+                    ctx.stroke();
+                }
             }
         }
 
@@ -97,60 +115,33 @@
     $whiteSmokeTrans: #f5f5f5BB;
 
     .map-outer-frame {
-        position: absolute;
+        position: relative;
         height: 100%;
         width: 100%;
 
-        .map-inner-frame {
-
+        .google-map-frame {
+            position: absolute;
             top: 0;
             left: 0;
             height: 100%;
             width: 100%;
-            position: absolute;
         }
 
-        .map-overlay {
+        .side-panel {
             top: 0;
-            left: 0;
+            right: 0;
             height: 100%;
-            width: 100%;
+            width: 50px;
             position: absolute;
-
-            .button-panel {
-                position: absolute;
-                background: $whiteSmokeTrans;
-                width: 50px;
-                height: 200px;
-                right: 30px;
-                top: 30px;
-            }
+            background: whitesmoke;
         }
 
-        .cursor {
+        .map-overlay-canvas {
             position: absolute;
-            width: 30px;
-            height: 30px;
             top: 0;
             left: 0;
-            z-index: 1001;
-            cursor: none;
             pointer-events: none;
-            visibility: hidden;
-
-            img {
-                width: 100%;
-                height: 100%;
-            }
         }
-
-        /*img.yellow-target {*/
-        /*   background-image: url("../assets/yellow_target.png");*/
-        /*}*/
-
-        /*img.orange-target {*/
-        /*    background-image: url("../assets/orange_target.png");*/
-        /*}*/
     }
 
 

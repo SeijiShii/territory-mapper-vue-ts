@@ -78,17 +78,32 @@
                 fullscreenControl: false,
             });
 
-            this.google.maps.event.addListener(this.map, 'click', this.onClickMap);
-            this.google.maps.event.addListener(this.map, 'mousemove', this.onHoverMap);
+            this.google.maps.event.addListener(this.map, 'click', this.onClickOnMap);
+            this.google.maps.event.addListener(this.map, 'mousemove', this.onMoveInMap);
         }
 
-        onClickMap(ev: any) {
-            console.log(ev);
-            this.$emit('on-click-map', this.map, ev);
+        onClickOnMap(ev: any) {
+            this.$emit('on-click-map', this.map, ev, this.latLngToPoint(ev.latLng, this.map));
         }
 
-        onHoverMap(ev: any) {
-            this.$emit('on-mousemove-in-map', this.map, ev);
+        onMoveInMap(ev: any) {
+            this.$emit('on-mousemove-in-map', this.map, ev, this.latLngToPoint(ev.latLng, this.map));
+        }
+
+        latLngToPoint(latLng: any, map: any) {
+            const topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
+            const bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
+            const scale = Math.pow(2, map.getZoom());
+            const worldPoint = map.getProjection().fromLatLngToPoint(latLng);
+            return new this.google.maps.Point((worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale);
+        }
+
+        pointToLatLng(point: any, map: any) {
+            const topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
+            const bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
+            const scale = Math.pow(2, map.getZoom());
+            const worldPoint = new this.google.maps.Point(point.x / scale + bottomLeft.x, point.y / scale + topRight.y);
+            return map.getProjection().fromPointToLatLng(worldPoint);
         }
     }
 </script>
