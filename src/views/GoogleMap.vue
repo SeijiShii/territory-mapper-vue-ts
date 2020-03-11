@@ -40,7 +40,7 @@
             this.loadGoogleMapsScript().then(google => {
                 this.google = google;
                 this.initializeMap()
-            })
+            });
         }
 
         loadGoogleMapsScript() {
@@ -80,14 +80,16 @@
 
             this.google.maps.event.addListener(this.map, 'click', this.onClickOnMap);
             this.google.maps.event.addListener(this.map, 'mousemove', this.onMoveInMap);
+
+            this.$emit('on-google-map-mounted', this.google);
         }
 
         onClickOnMap(ev: any) {
-            this.$emit('on-click-map', this.map, ev, this.latLngToPoint(ev.latLng, this.map));
+            this.$emit('on-click-map', this.map, ev);
         }
 
         onMoveInMap(ev: any) {
-            this.$emit('on-mousemove-in-map', this.map, ev, this.latLngToPoint(ev.latLng, this.map));
+            this.$emit('on-mousemove-in-map', this.map, ev);
         }
 
         latLngToPoint(latLng: any, map: any) {
