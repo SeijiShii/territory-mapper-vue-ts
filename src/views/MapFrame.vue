@@ -64,7 +64,8 @@
         private onMoveInGoogleMap(map: any, ev: any) {
 
             if (this.isDrawing) {
-                this.drawCoordinateLines(map, ev.latLng)
+                this.drawCoordinateLines(map, ev.latLng);
+                this.refreshActiveDrawingLineIfNeeded(map, ev.latLng);
             }
 
         }
@@ -92,6 +93,15 @@
                 this.activeMarker.setMap(null);
                 this.activeMarker = null;
             }
+
+            if (this.activeDrawingLine) {
+                this.activeDrawingLine.setMap(null);
+                this.activeDrawingLine = null;
+            }
+
+            if (this.lastPoint) {
+                this.lastPoint = null;
+            }
         }
 
         private get drawButtonIcon() {
@@ -108,12 +118,18 @@
         }
 
         private activeColor = '#FFA500';
-        private inactiveColor = '#FFFF00';
+        private drawingColor = '#FFFF00';
 
-        private coordinateLineOptions = {
+        private activeLineOptions = {
             strokeColor: this.activeColor,
             strokeOpacity: 1.0,
             strokeWeight: 1
+        };
+
+        private drawingLineOptions = {
+            strokeColor: this.drawingColor,
+            strokeOpacity: 1.0,
+            strokeWeight: 2
         };
 
         private verticalLine: any = null;
@@ -129,7 +145,7 @@
             if (this.verticalLine) {
                 this.verticalLine.setMap(null);
             } else {
-                this.verticalLine = new this.google.maps.Polyline(this.coordinateLineOptions);
+                this.verticalLine = new this.google.maps.Polyline(this.activeLineOptions);
             }
 
             this.verticalLine.setPath([{lat: -90, lng: y}, {lat: 0, lng: y}, {lat: 90, lng: y}]);
@@ -139,7 +155,7 @@
                 this.horizontalLine.setMap(null);
 
             } else {
-                this.horizontalLine = new this.google.maps.Polyline(this.coordinateLineOptions);
+                this.horizontalLine = new this.google.maps.Polyline(this.activeLineOptions);
 
             }
 
@@ -155,6 +171,7 @@
                     map: map,
                     icon: this.activeIcon,
                 });
+                // 描画中はマーカーが追従してくる関係で、マップの方にクリックイベントが発生しない。
                 this.activeMarker.addListener('click', () => {
                     this.addMapPoint(map, this.activeMarker.getPosition());
                 });
@@ -178,9 +195,26 @@
         }
 
         private lastPoint: MapPoint | null = null;
+        private activeDrawingLine: any = null;
 
-        private refreshDrawingLine(map: any) {
-            //
+
+        private refreshActiveDrawingLineIfNeeded(map: any, currLatLng: any) {
+
+            if (!this.lastPoint && !this.activeDrawingLine) {
+                return
+            }
+
+            if (!this.activeDrawingLine) {
+                this.activeDrawingLine = new this.google.maps.Polyline(this.drawingLineOptions);
+            } else {
+                this.activeDrawingLine.setMap(null);
+            }
+
+            if (this.lastPoint) {
+                const lastLatLng = {lat: this.lastPoint.lat, lng: this.lastPoint.lng};
+                this.activeDrawingLine.setPath([lastLatLng, currLatLng]);
+                this.activeDrawingLine.setMap(map);
+            }
         }
 
         private addMapPoint(map: any, latLng: any) {
@@ -194,8 +228,17 @@
             const marker = new this.google.maps.Marker({
                 map: map,
                 position: latLng,
-                icon: this.generateCircleIcon(this.inactiveColor),
+                icon: this.generateCircleIcon(this.drawingColor),
             });
+
+            if (this.lastPoint) {
+                const drawingLine = new this.google.maps.Polyline(this.drawingLineOptions);
+                const lastLatLng = {lat: this.lastPoint.lat, lng: this.lastPoint.lng};
+                drawingLine.setPath([lastLatLng, point.latLng]);
+                drawingLine.setMap(map);
+            }
+
+            this.lastPoint = point.clone();
         }
     }
 
