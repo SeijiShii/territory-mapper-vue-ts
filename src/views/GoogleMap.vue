@@ -10,6 +10,7 @@
 <script lang="ts">
     import {Component, Vue, Prop} from 'vue-property-decorator'
     import qs from 'query-string'
+    import GoogleHelper from "@/utils/GoogleHelper";
 
     const params = {
         // https://stackoverflow.com/questions/50828904/using-environment-variables-with-vue-js
@@ -79,10 +80,12 @@
             });
 
             this.google.maps.event.addListener(this.map, 'click', this.onClickOnMap);
-            // this.google.maps.event.addListener(this.map, 'rightclick', this.onRightClick);
+            this.google.maps.event.addListener(this.map, 'rightclick', this.onRightClick);
             this.google.maps.event.addListener(this.map, 'mousemove', this.onMoveInMap);
 
+            GoogleHelper.initialize(this.google, this.map);
             this.$emit('on-google-map-mounted', this.google);
+
         }
 
         onClickOnMap(ev: any) {
@@ -93,25 +96,11 @@
             this.$emit('on-mousemove-in-map', this.map, ev);
         }
 
-        // onRightClick(ev: any) {
-        //     this.$emit('on-right-click-map', this.map, ev);
-        // }
-
-        latLngToPoint(latLng: any, map: any) {
-            const topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
-            const bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
-            const scale = Math.pow(2, map.getZoom());
-            const worldPoint = map.getProjection().fromLatLngToPoint(latLng);
-            return new this.google.maps.Point((worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale);
+        onRightClick(ev: any) {
+            this.$emit('on-right-click-map', this.map, ev);
         }
 
-        pointToLatLng(point: any, map: any) {
-            const topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
-            const bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
-            const scale = Math.pow(2, map.getZoom());
-            const worldPoint = new this.google.maps.Point(point.x / scale + bottomLeft.x, point.y / scale + topRight.y);
-            return map.getProjection().fromPointToLatLng(worldPoint);
-        }
+
     }
 </script>
 
