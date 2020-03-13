@@ -64,7 +64,7 @@
         private onMoveInGoogleMap(map: any, ev: any) {
 
             if (this.isDrawing) {
-                this.drawCoordinateLines(map, ev.latLng);
+                this.drawActiveUIs(map, ev.latLng);
                 this.refreshActiveDrawingLineIfNeeded(map, ev.latLng);
             }
 
@@ -79,15 +79,6 @@
         }
 
         private clearActiveUIs() {
-            if (this.horizontalLine) {
-                this.horizontalLine.setMap(null);
-                this.horizontalLine = null;
-            }
-
-            if (this.verticalLine) {
-                this.verticalLine.setMap(null);
-                this.verticalLine = null
-            }
 
             if (this.activeMarker) {
                 this.activeMarker.setMap(null);
@@ -120,47 +111,16 @@
         private activeColor = '#FFA500';
         private drawingColor = '#FFFF00';
 
-        private activeLineOptions = {
-            strokeColor: this.activeColor,
-            strokeOpacity: 1.0,
-            strokeWeight: 1
-        };
-
         private drawingLineOptions = {
             strokeColor: this.drawingColor,
             strokeOpacity: 1.0,
             strokeWeight: 2
         };
 
-        private verticalLine: any = null;
-        private horizontalLine: any = null;
         private activeMarker: any = null;
         private activeIcon: any = null;
 
-        private drawCoordinateLines(map: any, latLng: any) {
-
-            const x = latLng.lat(),
-                y = latLng.lng();
-
-            if (this.verticalLine) {
-                this.verticalLine.setMap(null);
-            } else {
-                this.verticalLine = new this.google.maps.Polyline(this.activeLineOptions);
-            }
-
-            this.verticalLine.setPath([{lat: -90, lng: y}, {lat: 0, lng: y}, {lat: 90, lng: y}]);
-            this.verticalLine.setMap(map);
-
-            if (this.horizontalLine) {
-                this.horizontalLine.setMap(null);
-
-            } else {
-                this.horizontalLine = new this.google.maps.Polyline(this.activeLineOptions);
-
-            }
-
-            this.horizontalLine.setPath([{lat: x, lng: -180}, {lat: x, lng: 0}, {lat: x, lng: 180}]);
-            this.horizontalLine.setMap(map);
+        private drawActiveUIs(map: any, latLng: any) {
 
             if (!this.activeIcon) {
                 this.activeIcon = this.generateCircleIcon(this.activeColor);
@@ -185,7 +145,7 @@
 
         private generateCircleIcon(color: string) {
             return {
-                path: 'M -13,0 A 13,13 0 0 1 0,-13 13,13 0 0 1 13,0 13,13 0 0 1 0,13 13,13 0 0 1 -13,0 Z',
+                path: 'M -8,0 A 8,8 0 0 1 0,-8 8,8 0 0 1 8,0 8,8 0 0 1 0,8 8,8 0 0 1 -8,0 Z',
                 fillOpacity: 0,
                 anchor: new this.google.maps.Point(0, 0),
                 strokeColor: color,
@@ -218,8 +178,6 @@
         }
 
         private addMapPoint(map: any, latLng: any) {
-
-            console.log(MapPoint);
 
             const point = new MapPoint();
             point.lat = latLng.lat();
