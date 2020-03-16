@@ -68,4 +68,52 @@ export default class GoogleHelper {
             throw new Error('Function initialize must be called with params "google, map" first!');
         }
     }
+
+    generateLatLng(lat: number, lng: number): any {
+        return new this._google.maps.LatLng(lat, lng);
+    }
+
+    generateDrawingMarker(lat: number, lng: number, isActive: boolean): any {
+        const pos = this.generateLatLng(lat, lng);
+        let color = GoogleHelper.drawingColor;
+        if (isActive) {
+            color = GoogleHelper.activeColor
+        }
+        return new GoogleHelper.instance.google.maps.Marker({
+            map: this._map,
+            position: pos,
+            icon: GoogleHelper.generateCircleIcon(color),
+            draggable: true,
+        });
+    }
+
+    private static generateCircleIcon(color: string) {
+        return {
+            path: 'M -8,0 A 8,8 0 0 1 0,-8 8,8 0 0 1 8,0 8,8 0 0 1 0,8 8,8 0 0 1 -8,0 Z',
+            fillOpacity: 0,
+            anchor: new GoogleHelper.instance.google.maps.Point(0, 0),
+            strokeColor: color,
+            strokeWeight: 3,
+            scale: 1
+        };
+    }
+
+    private static activeColor = '#FFA500';
+    private static drawingColor = '#FFFF00';
+
+    static drawingLineOptions = {
+        strokeColor: GoogleHelper.drawingColor,
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+    };
+
+    public generatePolyline(setMap: boolean): any {
+        const line = new this._google.maps.Polyline(GoogleHelper.drawingLineOptions)
+        if (setMap) {
+            line.setMap(this._map)
+        }
+        return line;
+    }
+
+
 }

@@ -1,3 +1,4 @@
+import PointName from "@/models/PointName";
 <template>
     <div class="map-outer-frame">
         <GoogleMap class="google-map-frame"
@@ -20,12 +21,13 @@
 
 <script lang="ts">
 
-    import { Component, Vue, Prop } from 'vue-property-decorator'
+    import {Component, Vue} from 'vue-property-decorator'
     import GoogleMap from "@/views/GoogleMap.vue";
     import MapPoint from "@/models/MapPoint";
     import GoogleHelper from "@/utils/GoogleHelper";
     import MapLine from "@/models/MapLine";
     import MapLineList from "@/models/MapLineList";
+    import PointName from "@/models/PointName";
 
     @Component({components: {GoogleMap}})
     export default class MapFrame extends Vue{
@@ -107,29 +109,12 @@
             this.googleMapFrame.style.width = frameWidth + 'px';
         }
 
-        private activeColor = '#FFA500';
-        private drawingColor = '#FFFF00';
-
-        private drawingLineOptions = {
-            strokeColor: this.drawingColor,
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        };
-
         private activeMarker: any = null;
-        private activeIcon: any = null;
 
         private refreshActiveMarker(map: any, latLng: any) {
 
-            if (!this.activeIcon) {
-                this.activeIcon = this.generateCircleIcon(this.activeColor);
-            }
-
             if (!this.activeMarker) {
-                this.activeMarker = new GoogleHelper.instance.google.maps.Marker({
-                    map: map,
-                    icon: this.activeIcon,
-                });
+                this.activeMarker = GoogleHelper.instance.generateDrawingMarker(latLng.lat(), latLng.lng(), true);
                 // 描画中はマーカーが追従してくる関係で、マップの方にクリックイベントが発生しない。
                 this.activeMarker.addListener('click', () => {
                     this.addMapPoint(map, this.activeMarker.getPosition());
@@ -143,17 +128,6 @@
             this.activeMarker.setPosition(latLng);
         }
 
-        private generateCircleIcon(color: string) {
-            return {
-                path: 'M -8,0 A 8,8 0 0 1 0,-8 8,8 0 0 1 8,0 8,8 0 0 1 0,8 8,8 0 0 1 -8,0 Z',
-                fillOpacity: 0,
-                anchor: new GoogleHelper.instance.google.maps.Point(0, 0),
-                strokeColor: color,
-                strokeWeight: 3,
-                scale: 1
-            };
-        }
-
         private lastMarkerPoint: MapPoint | null = null;
         private activeDrawingLine: any = null;
 
@@ -165,7 +139,7 @@
             }
 
             if (!this.activeDrawingLine) {
-                this.activeDrawingLine = new GoogleHelper.instance.google.maps.Polyline(this.drawingLineOptions);
+                this.activeDrawingLine = GoogleHelper.instance.generatePolyline(false);
             } else {
                 this.activeDrawingLine.setMap(null);
             }
@@ -182,25 +156,24 @@
             let point = MapLineList.instance.getMapPointByPosition(latLng, 8);
             if (!point) {
                 point = new MapPoint();
-                point.marker = new GoogleHelper.instance.google.maps.Marker({
-                    map: map,
-                    position: latLng,
-                    icon: this.generateCircleIcon(this.drawingColor),
-                    draggable: true,
-                });
+                point.marker = GoogleHelper.instance.generateDrawingMarker(latLng.lat(), latLng.lng(), false);
                 point.marker.addListener('drag', (ev: any)=> {
-                    console.log(point?.id + ', ' + ev.latLng);
+                    // console.log(point?.id + ', ' + ev.latLng);
                     MapFrame.onDragMarker(point, ev.latLng)
                 })
             }
 
             if (this.lastMarkerPoint) {
-                const drawingLine = new GoogleHelper.instance.google.maps.Polyline(this.drawingLineOptions);
+                const drawingLine = GoogleHelper.instance.generatePolyline(false);
                 drawingLine.setPath([this.lastMarkerPoint.latLng, latLng]);
                 drawingLine.setMap(map);
 
                 const line = new MapLine(this.lastMarkerPoint, point, drawingLine);
                 MapLineList.instance.add(line);
+
+                drawingLine.addListener('click', (ev: any) => {
+                    MapFrame.onClickLine(line, ev.latLng);
+                });
             }
 
             this.lastMarkerPoint = point;
@@ -214,6 +187,33 @@
             lines.forEach((line) => {
                 line.refresh();
             })
+        }
+
+        private static onClickLine(line: MapLine, latLng: any) {
+            this.addPointOnLine(line, latLng);
+        }
+
+        private static addPointOnLine(line: MapLine, latLng: any) {
+
+            const copiedEndPoint = new MapPoint();
+            copiedEndPoint.marker = GoogleHelper.instance.generateDrawingMarker(line.end.latLng.lat(), line.end.latLng.lng(), false);
+
+            const connectedLine = MapLineList.instance.getConnectedLine(line, line.end);
+            if (connectedLine) {
+                const connectedPointName = connectedLine.getPointName(copiedEndPoint);
+                if (connectedPointName !== PointName.None) {
+                    connectedLine.setPoint(connectedPointName, copiedEndPoint);
+                }
+            }
+
+            line.end.marker.setPosition(latLng);
+            line.refresh();
+
+            const polyline = GoogleHelper.instance.generatePolyline(true);
+            const addedLine = new MapLine(line.end, copiedEndPoint, polyline);
+            addedLine.refresh();
+
+            MapLineList.instance.add(addedLine);
         }
 
     }

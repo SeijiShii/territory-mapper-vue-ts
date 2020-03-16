@@ -60,4 +60,19 @@ export default class MapLineList {
         return lines;
     }
 
+    getConnectedLine(line: MapLine, point: MapPoint): MapLine | null {
+        for (let i = 0 ; i < this.list.length ; i++) {
+            const line2 = this.list[i];
+
+            if (line2 === line) {
+                continue;
+            }
+
+            if (line2.start === point || line2.end === point) {
+                return line2;
+            }
+        }
+        return null;
+    }
+
 }

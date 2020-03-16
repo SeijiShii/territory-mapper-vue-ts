@@ -10,5 +10,6 @@ export default class MapPoint {
         }
         return this.marker.position;
     }
+
 }
 
