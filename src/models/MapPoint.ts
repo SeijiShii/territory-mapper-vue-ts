@@ -1,20 +1,14 @@
 import StringUtils from "@/utils/StringUtils";
 
 export default class MapPoint {
-    lat = 0;
-    lng = 0;
     id: string = StringUtils.generateId('map_point');
+    marker: any = null;
 
     get latLng() {
-        return {lat: this.lat, lng: this.lng};
-    }
-
-    clone() {
-        const cloned = new MapPoint();
-        cloned.lat = this.lat;
-        cloned.lng = this.lng;
-        cloned.id = this.id;
-        return cloned;
+        if (!this.marker) {
+            throw new Error('Marker is not assigned!')
+        }
+        return this.marker.position;
     }
 }
 

@@ -24,6 +24,8 @@
     import GoogleMap from "@/views/GoogleMap.vue";
     import MapPoint from "@/models/MapPoint";
     import GoogleHelper from "@/utils/GoogleHelper";
+    import MapLine from "@/models/MapLine";
+    import MapLineList from "@/models/MapLineList";
 
     @Component({components: {GoogleMap}})
     export default class MapFrame extends Vue{
@@ -43,7 +45,6 @@
         }
 
         private onClickOnGoogleMap(map: any, ev: any) {
-            //
 
             if (this.isDrawing) {
                 this.addMapPoint(map, ev.latLng);
@@ -58,11 +59,14 @@
         private onMoveInGoogleMap(map: any, ev: any) {
 
             if (this.isDrawing) {
-                const snappedPos = this.getSnappedPosition(ev.latLng);
-                this.refreshActiveMarker(map, snappedPos);
-                this.refreshActiveDrawingLineIfNeeded(map, snappedPos);
+                let pos = ev.latLng;
+                const snappedPoint = MapLineList.instance.getMapPointByPosition(ev.latLng, 8);
+                if (snappedPoint) {
+                    pos = snappedPoint.latLng
+                }
+                this.refreshActiveMarker(map, pos);
+                this.refreshActiveDrawingLineIfNeeded(map, pos);
             }
-
         }
 
         private onClickDrawButton() {
@@ -85,8 +89,8 @@
                 this.activeDrawingLine = null;
             }
 
-            if (this.lastPoint) {
-                this.lastPoint = null;
+            if (this.lastMarkerPoint) {
+                this.lastMarkerPoint = null;
             }
         }
 
@@ -150,13 +154,13 @@
             };
         }
 
-        private lastPoint: MapPoint | null = null;
+        private lastMarkerPoint: MapPoint | null = null;
         private activeDrawingLine: any = null;
 
 
         private refreshActiveDrawingLineIfNeeded(map: any, latLng: any) {
 
-            if (!this.lastPoint && !this.activeDrawingLine) {
+            if (!this.lastMarkerPoint && !this.activeDrawingLine) {
                 return
             }
 
@@ -166,71 +170,52 @@
                 this.activeDrawingLine.setMap(null);
             }
 
-            if (this.lastPoint) {
-                const lastLatLng = {lat: this.lastPoint.lat, lng: this.lastPoint.lng};
-                this.activeDrawingLine.setPath([lastLatLng, latLng]);
+            if (this.lastMarkerPoint) {
+                this.activeDrawingLine.setPath([this.lastMarkerPoint.latLng, latLng]);
                 this.activeDrawingLine.setMap(map);
             }
         }
 
-        private markers: any[] = [];
         private addMapPoint(map: any, latLng: any) {
 
-            const point = new MapPoint();
-            point.lat = latLng.lat();
-            point.lng = latLng.lng();
+            // スナップしているポイントが存在するかどうか
+            let point = MapLineList.instance.getMapPointByPosition(latLng, 8);
+            if (!point) {
+                point = new MapPoint();
+                point.marker = new GoogleHelper.instance.google.maps.Marker({
+                    map: map,
+                    position: latLng,
+                    icon: this.generateCircleIcon(this.drawingColor),
+                    draggable: true,
+                });
+                point.marker.addListener('drag', (ev: any)=> {
+                    console.log(point?.id + ', ' + ev.latLng);
+                    MapFrame.onDragMarker(point, ev.latLng)
+                })
+            }
 
-            const marker = new GoogleHelper.instance.google.maps.Marker({
-                map: map,
-                position: latLng,
-                icon: this.generateCircleIcon(this.drawingColor),
-            });
-
-            // marker.addListener('mouseover', (ev: any) => {
-            //      this.onMouseMovedOnExistingMarker(ev.latLng)
-            // });
-
-            // マーカーにポイントを差し込む
-            marker.point = point;
-            this.markers.push(marker);
-
-            if (this.lastPoint) {
+            if (this.lastMarkerPoint) {
                 const drawingLine = new GoogleHelper.instance.google.maps.Polyline(this.drawingLineOptions);
-                const lastLatLng = {lat: this.lastPoint.lat, lng: this.lastPoint.lng};
-                drawingLine.setPath([lastLatLng, point.latLng]);
+                drawingLine.setPath([this.lastMarkerPoint.latLng, latLng]);
                 drawingLine.setMap(map);
+
+                const line = new MapLine(this.lastMarkerPoint, point, drawingLine);
+                MapLineList.instance.add(line);
             }
 
-            this.lastPoint = point.clone();
+            this.lastMarkerPoint = point;
         }
 
-        // private onMouseMovedOnExistingMarker(latLng: any) {
-        //     const marker = this.getMarkerByLatLng(latLng);
-        //
-        //     if (marker) {
-        //         console.log(marker);
-        //     }
-        // }
+        private static onDragMarker(point: MapPoint | null, latLng: any) {
 
-        private getMarkerByLatLng(latLng: any) {
+            if (!point) return;
 
-            for(let i = 0 ; i < this.markers.length; i++) {
-                const marker2 = this.markers[i];
-                if (GoogleHelper.instance.arePositionsClose(latLng, marker2.position, 8)) {
-                    return marker2;
-                }
-            }
-            return null;
+            const lines = MapLineList.instance.getLinesByPoint(point);
+            lines.forEach((line) => {
+                line.refresh();
+            })
         }
 
-        private getSnappedPosition(latLng: any) {
-
-            const closedMarker = this.getMarkerByLatLng(latLng);
-            if (closedMarker) {
-                return closedMarker.position
-            }
-            return latLng;
-        }
     }
 
 

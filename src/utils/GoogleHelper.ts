@@ -51,13 +51,17 @@ export default class GoogleHelper {
     }
 
     arePositionsClose(latLng1: any, latLng2: any, rangePx: number): boolean {
+        const dist = this.distInScreen(latLng1, latLng2);
+        return dist <= rangePx;
+    }
 
+    distInScreen(latLng1: any, latLng2: any): number {
         const point1 = this.latLngToPoint(latLng1),
             point2 = this.latLngToPoint(latLng2);
 
-        const dist = Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
-        return dist <= rangePx;
+        return  Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
     }
+
 
     private checkInitialized() {
         if (!this._google || !this._map) {
