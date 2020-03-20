@@ -45,5 +45,19 @@ export default class MapLine {
         return PointName.None;
     }
 
+    public getOtherPoint(point: MapPoint): MapPoint | null {
+
+        if (!point.isSamePosition(this.start)
+                && !point.isSamePosition(this.end)) {
+            return null;
+        }
+
+        if (point.isSamePosition(this.start)) {
+            return this.end;
+        }
+
+        return this.start;
+    }
+
 
 }

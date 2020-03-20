@@ -1,6 +1,7 @@
 import MapLine from "@/models/MapLine";
 import MapPoint from "@/models/MapPoint";
 import GoogleHelper from "@/utils/GoogleHelper";
+import GeoUtils from "@/utils/GeoUtils";
 
 export default class MapLineList {
 
@@ -35,6 +36,17 @@ export default class MapLineList {
         if (!this.pointContained(line.end)) {
             this.points.push(line.end);
         }
+
+        // this.points.forEach((p) => {
+        //     const lines = this.getLinesByPoint(p);
+        //     lines.forEach((line) => {
+        //         const otherPoint = line.getOtherPoint(p);
+        //         if (otherPoint) {
+        //             const r = GeoUtils.getRadian(p.latLng, otherPoint.latLng);
+        //             console.log(r);
+        //         }
+        //     })
+        // })
     }
 
     private containsDupLine(line: MapLine): boolean {
