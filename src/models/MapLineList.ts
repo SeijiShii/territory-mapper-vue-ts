@@ -22,6 +22,11 @@ export default class MapLineList {
     private points: MapPoint[] = [];
 
     public add(line: MapLine){
+
+        if (this.containsDupLine(line)) {
+            return;
+        }
+
         this.list.push(line);
 
         if (!this.pointContained(line.start)){
@@ -30,6 +35,17 @@ export default class MapLineList {
         if (!this.pointContained(line.end)) {
             this.points.push(line.end);
         }
+    }
+
+    private containsDupLine(line: MapLine): boolean {
+        let contained = false;
+        this.list.forEach((l) => {
+            if (l.start.isSamePosition(line.start) && l.end.isSamePosition(line.end)
+            || l.start.isSamePosition(line.end) && l.end.isSamePosition(line.start)) {
+                contained = true;
+            }
+        });
+        return contained;
     }
 
     public refreshPointMarker(point: MapPoint) {

@@ -43,5 +43,10 @@ export default class MapPoint {
         return this.marker.position;
     }
 
+    isSamePosition(point: MapPoint): boolean {
+        return this.latLng.lat() === point.latLng.lat()
+            && this.latLng.lng() === point.latLng.lng();
+    }
+
 }
 
