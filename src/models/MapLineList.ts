@@ -19,9 +19,34 @@ export default class MapLineList {
     }
 
     private list: MapLine[] = [];
+    private points: MapPoint[] = [];
 
     public add(line: MapLine){
         this.list.push(line);
+
+        if (!this.pointContained(line.start)){
+            this.points.push(line.start);
+        }
+        if (!this.pointContained(line.end)) {
+            this.points.push(line.end);
+        }
+    }
+
+    public refreshPointMarker(point: MapPoint) {
+        this.points.forEach((p) => {
+            p.isActive = false;
+        });
+        point.isActive = true;
+    }
+
+    private pointContained(point: MapPoint): boolean {
+        let contained = false;
+        this.points.forEach((p) => {
+           if (p.id === point.id) {
+               contained = true
+           }
+        });
+        return contained;
     }
 
 

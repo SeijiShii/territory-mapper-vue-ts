@@ -75,16 +75,17 @@ export default class GoogleHelper {
 
     generateDrawingMarker(lat: number, lng: number, isActive: boolean): any {
         const pos = this.generateLatLng(lat, lng);
-        let color = GoogleHelper.drawingColor;
-        if (isActive) {
-            color = GoogleHelper.activeColor
-        }
         return new GoogleHelper.instance.google.maps.Marker({
             map: this._map,
             position: pos,
-            icon: GoogleHelper.generateCircleIcon(color),
+            icon: GoogleHelper.generateCircleIconByActiveState(isActive),
             draggable: true,
         });
+    }
+
+    static generateCircleIconByActiveState(isActive: boolean) {
+        const color = isActive ? this.activeColor : this.drawingColor;
+        return this.generateCircleIcon(color);
     }
 
     private static generateCircleIcon(color: string) {

@@ -157,10 +157,8 @@ import PointName from "@/models/PointName";
             if (!point) {
                 point = new MapPoint();
                 point.marker = GoogleHelper.instance.generateDrawingMarker(latLng.lat(), latLng.lng(), false);
-                point.marker.addListener('drag', (ev: any)=> {
-                    // console.log(point?.id + ', ' + ev.latLng);
-                    MapFrame.onDragMarker(point, ev.latLng)
-                })
+                point.onDragMarker = MapFrame.onDragMarker;
+                point.onClickMarker = this.onClickMarkerPoint;
             }
 
             if (this.lastMarkerPoint) {
@@ -181,12 +179,22 @@ import PointName from "@/models/PointName";
 
         private static onDragMarker(point: MapPoint | null, latLng: any) {
 
+            if (point !== null && !point.isActive) {
+                MapLineList.instance.refreshPointMarker(point);
+            }
+
             if (!point) return;
 
             const lines = MapLineList.instance.getLinesByPoint(point);
             lines.forEach((line) => {
                 line.refresh();
             })
+        }
+
+        private onClickMarkerPoint(point: MapPoint) {
+            if (!this.isDrawing) {
+                MapLineList.instance.refreshPointMarker(point);
+            }
         }
 
         private static onClickLine(line: MapLine, latLng: any) {
