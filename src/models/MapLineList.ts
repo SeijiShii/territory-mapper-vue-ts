@@ -100,4 +100,67 @@ export default class MapLineList {
         return null;
     }
 
+    onDeleteKeyDown() {
+        const p = this.activePoint;
+        if (p) {
+            this.removePointAndRelatedLines(p);
+        }
+    }
+
+    private get activePoint(): MapPoint | null {
+
+        let p = null;
+
+        this.points.forEach((p2) => {
+            if (p2.isActive) {
+                p = p2;
+            }
+        });
+        return p;
+    }
+
+    private removePointAndRelatedLines(point: MapPoint) {
+
+        this.removePoint(point);
+
+        const relatedLines = this.getLinesByPoint(point);
+        relatedLines.forEach((l) => {
+            l.line.setMap(null);
+        });
+
+        const tmpLines: MapLine[] = [];
+        this.list.forEach((l) => {
+            let related = false;
+            relatedLines.forEach((rl) => {
+                if (l === rl) {
+                    related = true;
+                }
+            });
+
+            if (!related) {
+                tmpLines.push(l);
+            }
+        });
+        this.list = tmpLines;
+
+        this.points.forEach((p) => {
+            const relatedLines2 = this.getLinesByPoint(p);
+            if (relatedLines2.length <= 0) {
+                this.removePoint(p);
+            }
+        });
+    }
+
+    private removePoint(point: MapPoint) {
+        const tmpPoints: MapPoint[] = [];
+        this.points.forEach((p => {
+            if (p.id !== point.id) {
+                tmpPoints.push(p);
+            }
+        }));
+        this.points = tmpPoints;
+
+        point.marker.setMap(null);
+    }
+
 }

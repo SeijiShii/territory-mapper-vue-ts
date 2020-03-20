@@ -26,8 +26,6 @@ export default class MapPoint {
         return this._marker;
     }
 
-
-
     private _isActive = false;
     set isActive(val: boolean) {
         this._isActive = val;

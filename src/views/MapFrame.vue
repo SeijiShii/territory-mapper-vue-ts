@@ -43,7 +43,19 @@ import PointName from "@/models/PointName";
 
             window.addEventListener('resize', this.refreshMapFrameSize);
 
-            this.refreshMapFrameSize()
+            this.refreshMapFrameSize();
+
+            document.addEventListener('keydown', (ev: any) => {
+                switch (ev.key) {
+                    case 'Delete':
+                        MapFrame.onDeleteKeyDown();
+                        break;
+                }
+            });
+        }
+
+        private static onDeleteKeyDown() {
+            MapLineList.instance.onDeleteKeyDown();
         }
 
         private onClickOnGoogleMap(map: any, ev: any) {
